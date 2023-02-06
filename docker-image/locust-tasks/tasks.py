@@ -29,12 +29,12 @@ class MetricsTaskSet(TaskSet):
     def on_start(self):
         self._deviceid = str(uuid.uuid4())
 
-    @task(1)
+    @task(100)
     def login(self):
         self.client.post(
             '/login', {"deviceid": self._deviceid})
 
-    @task(999)
+    @task(900)
     def post_metrics(self):
         self.client.post(
             "/metrics", {"deviceid": self._deviceid, "timestamp": datetime.now()})
