@@ -19,7 +19,8 @@ metadata:
   labels:
     name: locust-worker
 spec:
-  replicas: 5
+# Removing the replicas so it does not conflict with Autoscaling 
+#  replicas: 10   
   selector:
     matchLabels:
       app: locust-worker
@@ -38,3 +39,40 @@ spec:
               value: locust-master
             - name: TARGET_HOST
               value: https://${SAMPLE_APP_TARGET}
+          resources:
+            requests:
+              cpu: "1000m"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: locust-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: locust-worker
+  minReplicas: 1
+  maxReplicas: 200
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 900
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 20
+        periodSeconds: 15
+      selectPolicy: Max
+
+      
